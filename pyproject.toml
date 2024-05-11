@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "llm_benchmark"
-version = "0.3.18"
-description = "LLM Benchmark for Throughputs via Ollama"
-authors = ["Jason Chuang <chuangtcee@gmail.com>"]
+name = "llm_bench"
+version = "0.4.3"
+description = "Forked off of LLM Benchmark for Throughputs via Ollama"
+authors = ["Snaas"]
 license = "MIT"
-homepage = "https://github.com/aidatatools/ollama-benchmark/"
+homepage = "https://github.com/b-Snaas/ollama-benchmark.git"
 readme = "README.md"
 keywords = [
     "benchmark",
@@ -13,6 +13,7 @@ keywords = [
     "llms",
     "local",
 ]
+
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -24,12 +25,13 @@ psutil = "^5.9.8"
 GPUtil = "^1.4.0"
 lib-platform = "^1.2.10"
 setuptools = "^69.1.0"
+speedtest-cli = "^2.1.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"
 
 [tool.poetry.scripts]
-llm_benchmark = "llm_benchmark.main:app"
+llm_bench = "llm_bench.main:app"
 
 [build-system]
 requires = ["poetry-core"]

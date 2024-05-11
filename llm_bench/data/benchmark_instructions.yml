@@ -1,0 +1,19 @@
+version: 1.0
+models:
+  - model: gemma:2b
+  - model: phi3
+  - model: mistral
+  - model: llama3
+prompts:
+  - prompt: What are your thoughts on the latest scientific discovery regarding black holes?
+    keywords: science, recent
+  - prompt: In a world where time travel is possible, a scientist invents a device that allows people to visit any historical event. One day, a young woman decides to travel back in time to...
+    keywords:
+  - prompt: Write a step-by-step guide on how to bake a chocolate cake from scratch.
+    keywords: cooking, recipe
+  - prompt: Develop a python function that solves the following problem, sudoku game
+    keywords: python, sudoku
+  - prompt: Create a dialogue between two characters that discusses economic crisis
+    keywords: dialogue
+  - prompt: In a forest, there are brave lions living there. Please continue the story.
+    keywords: sentence completition

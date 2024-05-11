@@ -1,0 +1,4 @@
+version: 1.0
+models:
+  - model: llama3:70b
+  - model: drbx

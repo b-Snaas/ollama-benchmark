@@ -28,3 +28,4 @@ typer==0.9.4
 typing_extensions==4.10.0
 urllib3==2.2.1
 wrapt==1.16.0
+speedtest-cli==2.1.3

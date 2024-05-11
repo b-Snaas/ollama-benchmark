@@ -1,0 +1,6 @@
+version: 1.0
+models:
+  - model: gemma:7b
+  - model: phi3
+  - model: mistral
+  - model: llama3

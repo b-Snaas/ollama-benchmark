@@ -4,14 +4,12 @@ with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 setup(
-    name='llm_benchmark',
-    version='0.3.18',
-    author='Jason Chuang',
-    author_email='chuangtcee@gmail.com',
+    name='llm_bench',
+    version='0.4.3',
     description='LLM Benchmark',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/aidatatools/ollama-benchmark',
+    url='https://github.com/b-Snaas/ollama-benchmark',
     packages=find_packages(),
     package_data={'llm_benchmark': ['data/*.yml', 'data/img/*.jpg']},
     classifiers=[
@@ -29,11 +27,12 @@ setup(
         'psutil = 5.9.8',
         'GPUtil = 1.4.0',
         'lib-platform = 1.2.10',
-        'setuptools = 69.1.0'
+        'setuptools = 69.1.0',
+        'speedtest-cli = 2.1.3',
     ],
     entry_points={
         'console_scripts': [
-            'llm_benchmark = llm_benchmark.main:app',
+            'llm_bench = llm_bench.main:app',
         ],
     },
     # This line enables editable installs
