@@ -14,12 +14,6 @@ pip install llm-bench
 llm_bench run
 ```
 
-## Installation and Usage in Video format
-
-![llm-benchmark](https://github.com/aidatatools/ollama-benchmark/blob/main/llm-benchmark.gif)
-
-It's tested on Python 3.9 and above.
-
 ## ollama installation with the following models installed
 
 7B model can be run on machines with 8GB of RAM
