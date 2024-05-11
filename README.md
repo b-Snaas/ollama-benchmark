@@ -5,13 +5,13 @@ LLM Benchmark for Throughput via Ollama (Local LLMs)
 ## Installation Steps
 
 ```bash
-pip install llm-benchmark
+pip install llm-bench
 ```
 
 ## Usage for general users directly
 
 ```bash
-llm_benchmark run
+llm_bench run
 ```
 
 ## Installation and Usage in Video format
@@ -82,19 +82,19 @@ llm_benchmark hello jason
 ### Example #1 send systeminfo and benchmark results to a remote server
 
 ```bash
-llm_benchmark run
+llm_bench run
 ```
 
 ### Example #2 Do not send systeminfo and benchmark results to a remote server
 
 ```bash
-llm_benchmark run --no-sendinfo
+llm_bench run --no-sendinfo
 ```
 
 ### Example #3 Benchmark run on explicitly given the path to the ollama executable (When you built your own developer version of ollama)
 
 ```bash
-llm_benchmark run --ollamabin=~/code/ollama/ollama
+llm_bench run --ollamabin=~/code/ollama/ollama
 ```
 
 ## Reference
