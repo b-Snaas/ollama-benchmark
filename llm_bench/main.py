@@ -2,8 +2,8 @@ import typer
 import pkg_resources
 import speedtest
 import time
-from systeminfo import sysmain
-from security_connection import connection 
+from .systeminfo import sysmain
+from .security_connection import connection 
 from llm_bench import check_models, check_ollama, run_benchmark
 
 app = typer.Typer()
