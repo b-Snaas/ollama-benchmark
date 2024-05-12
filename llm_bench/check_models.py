@@ -29,7 +29,6 @@ def parse_yaml(yaml_file_path):
     return data
 
 def pull_models(models_file_path):
-    print(f"LLM models file path：{models_file_path}")
     print(f"Checking and pulling the following LLM models")
     models_dict = parse_yaml(models_file_path)
     for x in models_dict['models']:

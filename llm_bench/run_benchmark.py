@@ -2,7 +2,7 @@ import argparse
 import yaml
 import subprocess
 import datetime
-import pkg_resources
+import re
 
 parser = argparse.ArgumentParser(
     prog="python3 check_models.py",
@@ -25,15 +25,28 @@ parser.add_argument("-b",
                     type=str,
                     help="provide benchmark YAML file path. ex. ../data/benchmark1.yml")
 
-
 def parse_yaml(yaml_file_path):
     with open(yaml_file_path, 'r') as stream:
         try:
-            data=yaml.safe_load(stream)
-            #print(d)
+            data = yaml.safe_load(stream)
         except yaml.YAMLError as e:
             print(e)
     return data
+
+def parse_duration(duration_str):
+    """ Parse duration from strings in various formats (s, ms, m+s) to seconds as a float. """
+    if 'ms' in duration_str:
+        return float(duration_str.replace('ms', '')) / 1000.0
+    elif 's' in duration_str:
+        match = re.match(r'(?:(\d+)m)?(\d*\.?\d*)s', duration_str)
+        if match:
+            minutes = int(match.group(1)) if match.group(1) else 0
+            seconds = float(match.group(2)) if match.group(2) else 0
+            return 60 * minutes + seconds
+        else:
+            raise ValueError(f"Unsupported duration format: {duration_str}")
+    else:
+        raise ValueError("Unsupported duration format")
 
 def run_benchmark(models_file_path, benchmark_file_path, ollamabin):
     models_dict = parse_yaml(models_file_path)
@@ -45,36 +58,60 @@ def run_benchmark(models_file_path, benchmark_file_path, ollamabin):
         model_name = model['model']
         if model_name in allowed_models:
             loc_dt = datetime.datetime.today()
-            file_path = f'log_{loc_dt.strftime("%Y-%m-%d-%H%M%S")}.log'
-            with open(file_path, "w", encoding='utf-8') as file:
-                stored_nums = []
-                for prompt in benchmark_dict['prompts']:
-                    prompt_text = prompt['prompt']
-                    print(f"prompt = {prompt_text}")
-                    result = subprocess.run([ollamabin, 'run', model_name, prompt_text, '--verbose'], capture_output=True, text=True, check=True, encoding='utf-8')
-                    std_err = result.stderr
-                    file.write(std_err)
+            stored_nums = []
+            total_tokens = 0
+            total_eval_duration = 0.0
+            total_duration = 0.0
+
+            print(f"Starting evaluation for model: {model_name}")
+            for index, prompt in enumerate(benchmark_dict['prompts'], start=1):
+                prompt_text = prompt['prompt']
+                print(f"Evaluating prompt {index}/{len(benchmark_dict['prompts'])}")
+                try:
+                    result = subprocess.run(
+                        [ollamabin, 'run', model_name, prompt_text, '--verbose'],
+                        capture_output=True,
+                        text=True,
+                        check=True,
+                        encoding='utf-8'
+                    )
+                    std_err = result.stderr or ''
+                    print("STDERR:", std_err)
                     
                     for line in std_err.split('\n'):
-                        if 'eval rate' in line and 'prompt' not in line:
-                            print(line)
-                            number = float(line[-20:-8])
+                        if line.lstrip().startswith("prompt"):
+                            continue
+                        if 'eval rate:' in line:
+                            number = float(line.split()[-2])
                             stored_nums.append(number)
+                        if 'eval count:' in line:
+                            total_tokens += int(line.split()[-2])
+                        if 'duration:' in line:
+                            parts = line.split(':')[-1].strip()
+                            duration = parse_duration(parts)
+                            if 'eval duration:' in line:
+                                total_eval_duration += duration
+                            elif 'total duration:' in line:
+                                total_duration += duration
+                except subprocess.SubprocessError as e:
+                    print(f"Error during subprocess execution: {e}")
 
-                print("-"*20) 
-                if stored_nums:
-                    average = sum(stored_nums) / len(stored_nums)
-                    print("Average of eval rate: ", round(average,3), " tokens/s")
-                    ans[model_name] = f"{round(average,3):.2f}"
-                print("-"*40)
-                file.write("\n"+"-"*40)
+            if stored_nums:
+                average = sum(stored_nums) / len(stored_nums)
+                print("Average of eval rate: ", round(average, 3), " tokens/s")
+                ans[model_name] = {
+                    'average_eval_rate': f"{round(average, 3):.2f} tokens/s",
+                    'total_tokens': total_tokens,
+                    'total_eval_duration': f"{total_eval_duration:.3f}s",
+                    'total_duration': f"{total_duration:.3f}s"
+                }
+            print(f"Results for {model_name}: {ans[model_name]}")
+            print('-' * 10 + "\n")
 
     return ans
 
 if __name__ == "__main__": 
     args = parser.parse_args()
-    if (args.models is not None) and (args.benchmark is not None):
+    if args.models and args.benchmark:
         run_benchmark(args.models, args.benchmark)
-        print('-'*40)
-        
-        
+        print('-' * 40)

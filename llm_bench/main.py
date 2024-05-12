@@ -1,8 +1,9 @@
 import typer
 import pkg_resources
 import speedtest
-from .systeminfo import sysmain
-from .security_connection import connection 
+import time
+from systeminfo import sysmain
+from security_connection import connection 
 from llm_bench import check_models, check_ollama, run_benchmark
 
 app = typer.Typer()
@@ -35,12 +36,15 @@ def sysinfo(formal: bool = True):
 
 @app.command()
 def check_internet_speed():
+    start_time = time.time()
     st = speedtest.Speedtest()
     st.get_best_server()
     download_speed = st.download() / 1_000_000
     upload_speed = st.upload() / 1_000_000
+    elapsed_time = time.time() - start_time
     print(f"Download Speed: {download_speed:.2f} Mbps")
     print(f"Upload Speed: {upload_speed:.2f} Mbps")
+    print(f"Internet speed test duration: {elapsed_time:.2f} seconds")
 
 @app.command()
 def run(
@@ -63,13 +67,17 @@ def run(
     print(f"os_version: {sys_info['os_version']}")
 
     ollama_version = check_ollama.check_ollama_version(ollamabin)
-    print(f"ollama_version: {ollama_version}")
-    print('-' * 10)
+    print(f"ollama_version: {ollama_version} \n")
 
-    check_models.pull_models(models_file)
-    print('-' * 10)
-
+    print("Internet speed test: ")
     check_internet_speed()
+    print('-' * 10)
+
+    start_time = time.time()
+    check_models.pull_models(models_file)
+    elapsed_time = time.time() - start_time
+    print(f"Model pulling time: {elapsed_time:.2f} seconds")
+    print('-' * 10)
 
     bench_results_info = {}
     result = run_benchmark.run_benchmark(models_file, benchmark_file, ollamabin)
