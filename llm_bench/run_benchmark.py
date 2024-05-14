@@ -72,11 +72,19 @@ def clean_output(text):
 
     return text.strip()
 
-def run_benchmark(models_file_path, benchmark_file_path, ollamabin):
+def run_benchmark(models_file_path, steps, benchmark_file_path, is_test, ollamabin):
     models_dict = parse_yaml(models_file_path)
     benchmark_dict = parse_yaml(benchmark_file_path)
     allowed_models = {e['model'] for e in models_dict['models']}
     ans = {}
+
+    
+    num_steps = steps
+    prompt_dict = benchmark_dict['prompts']
+
+    if is_test:
+        prompt_dict = benchmark_dict["testPrompts"]
+        num_steps = min(len(prompt_dict), steps)
 
     for model in models_dict['models']:
         model_name = model['model']
@@ -87,9 +95,9 @@ def run_benchmark(models_file_path, benchmark_file_path, ollamabin):
             total_duration = 0.0
 
             print(f"Starting evaluation for model: {model_name}\n")
-            for index, prompt in enumerate(benchmark_dict['prompts'], start=1):
+            for index, prompt in enumerate(prompt_dict[:num_steps], start=1):
                 prompt_text = prompt['prompt']
-                print(f"Evaluating prompt {index}/{len(benchmark_dict['prompts'])}")
+                print(f"Evaluating prompt {index}/{num_steps}")
                 print('-' * 10)
                 try:
                     result = subprocess.run(

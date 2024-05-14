@@ -18,3 +18,6 @@ prompts:
   - prompt: Illustrate a day in the life of an astronaut aboard the International Space Station, focusing on both the scientific tasks and the personal challenges faced.
   - prompt: Craft a tale about a mysterious, ancient library discovered beneath the sands of the Sahara, revealing secrets about lost civilizations.
 
+testPrompts:
+  - prompt: "Say hello."
+  - prompt: "Say hello."
