@@ -54,12 +54,17 @@ def run(
         "small", help="Select model size: small, medium, or large.",
         case_sensitive=False, show_choices=True
     ),
-    benchmark_file: str = typer.Option(
-        pkg_resources.resource_filename('llm_bench', 'data/benchmark_instructions.yml'),
-        help="Path to the benchmark instructions file."
+    test: bool = typer.Option(
+        False, '--test', help="Flag to toggle between default and alternative benchmark tests."
     )
 ):
-    models_file = get_model_path(models)
+    if test:
+        benchmark_file = pkg_resources.resource_filename('llm_bench', 'data/test_benchmark.yml')
+        models_file = pkg_resources.resource_filename('llm_bench', 'data/test_model.yml')
+    else:
+        benchmark_file = pkg_resources.resource_filename('llm_bench', 'data/benchmark_instructions.yml')
+        models_file = get_model_path(models)
+
     sys_info = sysmain.get_extra()
     print(f"Total memory size : {sys_info['memory']:.2f} GB") 
     print(f"cpu_info: {sys_info['cpu']}")

@@ -1,0 +1,6 @@
+version: 1.0
+models:
+  - model: qwen:7b
+prompts:
+  - prompt: What are your thoughts on the latest scientific discovery regarding black holes?
+  - prompt: In a world where time travel is possible, a scientist invents a device that allows people to visit any historical event. One day, a young woman decides to travel back in time to...

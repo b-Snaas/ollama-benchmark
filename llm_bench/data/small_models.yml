@@ -4,3 +4,4 @@ models:
   - model: phi3
   - model: mistral
   - model: llama3
+  - model: qwen:7b
