@@ -20,4 +20,3 @@ prompts:
 
 testPrompts:
   - prompt: "Say hello."
-  - prompt: "Say hello."
