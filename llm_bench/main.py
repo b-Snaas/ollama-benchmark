@@ -8,12 +8,12 @@ from llm_bench import check_models, check_ollama, run_benchmark
 
 app = typer.Typer()
 
-@app.command()
+@app.command(name="get_model_path")
 def get_model_path(model: str) -> str:
     """ Helper function to return the correct file path based on the model size """
     return pkg_resources.resource_filename('llm_bench', f'data/{model}_models.yml')
 
-@app.command()
+@app.command(name="sysinfo")
 def sysinfo(formal: bool = True):
     if formal:
         sys_info = sysmain.get_extra()
@@ -29,7 +29,7 @@ def sysinfo(formal: bool = True):
     else:
         print(f"No print!")
 
-@app.command()
+@app.command(name="check_internet_speed")
 def check_internet_speed():
     start_time = time.time()
     st = speedtest.Speedtest()
@@ -41,7 +41,7 @@ def check_internet_speed():
     print(f"Upload Speed: {upload_speed:.2f} Mbps")
     print(f"Internet speed test duration: {elapsed_time:.2f} seconds")
 
-@app.command()
+@app.command(name="run")
 def run(
     ollamabin: str = typer.Option('ollama', help="Path to the Ollama binary."),
     sendinfo: bool = typer.Option(False, help="Flag to send system info."),
@@ -57,20 +57,11 @@ def run(
         min=1, max=10
     )
 ):
-   
     benchmark_file = pkg_resources.resource_filename('llm_bench', 'data/benchmark_instructions.yml')
     models_file = get_model_path(model)
 
     if sendinfo:
-        sys_info = sysmain.get_extra()
-        print(f"Total memory size : {sys_info['memory']:.2f} GB") 
-        print(f"cpu_info: {sys_info['cpu']}")
-        print(f"gpu_info: {sys_info['gpu']}")
-        print(f"os_version: {sys_info['os_version']}")
-
-        print("Internet speed test: ")
-        check_internet_speed()
-        print('-' * 10)
+        sysmain.get_extra()
 
     ollama_version = check_ollama.check_ollama_version(ollamabin)
     print(f"ollama_version: {ollama_version} \n")
