@@ -9,14 +9,9 @@ from llm_bench import check_models, check_ollama, run_benchmark
 app = typer.Typer()
 
 @app.command()
-def get_model_path(size: str) -> str:
+def get_model_path(model: str) -> str:
     """ Helper function to return the correct file path based on the model size """
-    model_paths = {
-        "small": pkg_resources.resource_filename('llm_bench', 'data/small_models.yml'),
-        "medium": pkg_resources.resource_filename('llm_bench', 'data/medium_models.yml'),
-        "large": pkg_resources.resource_filename('llm_bench', 'data/large_models.yml')
-    }
-    return model_paths.get(size, "default.yml")
+    return pkg_resources.resource_filename('llm_bench', f'data/{model}_models.yml')
 
 @app.command()
 def sysinfo(formal: bool = True):
@@ -49,34 +44,36 @@ def check_internet_speed():
 @app.command()
 def run(
     ollamabin: str = typer.Option('ollama', help="Path to the Ollama binary."),
-    sendinfo: bool = typer.Option(True, help="Flag to send system info."),
-    models: str = typer.Option(
-        "small", help="Select model size: small, medium, or large.",
+    sendinfo: bool = typer.Option(False, help="Flag to send system info."),
+    model: str = typer.Option(
+        "all", help="Select model: all-small, gemma-small, llama3-small, mistral-small, phi3-small, qwen-small, all-medium, gemma-medium, phi3-medium, llama3-medium, all-large, drbx-large, llama3-large",
         case_sensitive=False, show_choices=True
     ),
     test: bool = typer.Option(
         False, '--test', help="Flag to toggle between default and alternative benchmark tests."
+    ),
+    steps: int = typer.Option(
+        10, help="Set the amount of inferences",
+        min=1, max=10
     )
 ):
-    if test:
-        benchmark_file = pkg_resources.resource_filename('llm_bench', 'data/test_benchmark.yml')
-        models_file = pkg_resources.resource_filename('llm_bench', 'data/test_model.yml')
-    else:
-        benchmark_file = pkg_resources.resource_filename('llm_bench', 'data/benchmark_instructions.yml')
-        models_file = get_model_path(models)
+   
+    benchmark_file = pkg_resources.resource_filename('llm_bench', 'data/benchmark_instructions.yml')
+    models_file = get_model_path(model)
 
-    sys_info = sysmain.get_extra()
-    print(f"Total memory size : {sys_info['memory']:.2f} GB") 
-    print(f"cpu_info: {sys_info['cpu']}")
-    print(f"gpu_info: {sys_info['gpu']}")
-    print(f"os_version: {sys_info['os_version']}")
+    if sendinfo:
+        sys_info = sysmain.get_extra()
+        print(f"Total memory size : {sys_info['memory']:.2f} GB") 
+        print(f"cpu_info: {sys_info['cpu']}")
+        print(f"gpu_info: {sys_info['gpu']}")
+        print(f"os_version: {sys_info['os_version']}")
+
+        print("Internet speed test: ")
+        check_internet_speed()
+        print('-' * 10)
 
     ollama_version = check_ollama.check_ollama_version(ollamabin)
     print(f"ollama_version: {ollama_version} \n")
-
-    print("Internet speed test: ")
-    check_internet_speed()
-    print('-' * 10)
 
     start_time = time.time()
     check_models.pull_models(models_file)
@@ -85,7 +82,7 @@ def run(
     print('-' * 10)
 
     bench_results_info = {}
-    result = run_benchmark.run_benchmark(models_file, benchmark_file, ollamabin)
+    result = run_benchmark.run_benchmark(models_file, steps, benchmark_file, test, ollamabin)
     bench_results_info.update(result)
 
     print(bench_results_info)
