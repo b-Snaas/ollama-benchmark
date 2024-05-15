@@ -77,8 +77,7 @@ def run_benchmark(models_file_path, steps, benchmark_file_path, is_test, ollamab
     benchmark_dict = parse_yaml(benchmark_file_path)
     allowed_models = {e['model'] for e in models_dict['models']}
     ans = {}
-
-    
+        
     num_steps = steps
     prompt_dict = benchmark_dict['prompts']
 
