@@ -24,6 +24,11 @@ parser.add_argument("-b",
                     type=str,
                     help="provide benchmark YAML file path. ex. ../data/benchmark1.yml")
 
+parser.add_argument("-t",
+                    "--test",
+                    action="store_true",
+                    help="run in test mode with minimal output")
+
 def parse_yaml(yaml_file_path):
     with open(yaml_file_path, 'r') as stream:
         try:
@@ -78,7 +83,6 @@ def run_benchmark(models_file_path, steps, benchmark_file_path, is_test, ollamab
     allowed_models = {e['model'] for e in models_dict['models']}
     ans = {}
 
-    
     num_steps = steps
     prompt_dict = benchmark_dict['prompts']
 
@@ -94,11 +98,15 @@ def run_benchmark(models_file_path, steps, benchmark_file_path, is_test, ollamab
             total_eval_duration = 0.0
             total_duration = 0.0
 
-            print(f"Starting evaluation for model: {model_name}\n")
+            if not is_test:
+                print(f"Starting evaluation for model: {model_name}\n")
+
             for index, prompt in enumerate(prompt_dict[:num_steps], start=1):
                 prompt_text = prompt['prompt']
-                print(f"Evaluating prompt {index}/{num_steps}")
-                print('-' * 10)
+                if not is_test:
+                    print(f"Evaluating prompt {index}/{num_steps}")
+                    print('-' * 10)
+
                 try:
                     result = subprocess.run(
                         [ollamabin, 'run', model_name, prompt_text, '--verbose'],
@@ -108,49 +116,55 @@ def run_benchmark(models_file_path, steps, benchmark_file_path, is_test, ollamab
                         encoding='utf-8'
                     )
                     std_err = result.stderr or ''
-                    
+
                     for line in std_err.split('\n'):
                         if line.lstrip().startswith("prompt"):
                             continue
                         if 'eval count:' in line:
                             tokens = int(line.split()[-2])
                             total_tokens += tokens
-                            # Print the number of produced tokens
-                            print(f"Produced Tokens: {tokens}")
+                            if not is_test:
+                                print(f"Produced Tokens: {tokens}")
                         if 'eval duration:' in line:
                             duration_str = line.split(':')[-1].strip()
                             eval_duration = parse_duration(duration_str)
                             total_eval_duration += eval_duration
-                            # Print out the duration of the evaluation
-                            print(f"Decoding Seconds: {eval_duration:.3f}s")
-                            # Print out tokens added and corresponding duration
-                            print(f"Tokens/Second: {tokens / eval_duration:.3f}")
+                            if not is_test:
+                                print(f"Decoding Seconds: {eval_duration:.3f}s")
+                                print(f"Tokens/Second: {tokens / eval_duration:.3f}")
                         if 'total duration:' in line:
                             duration_str = line.split(':')[-1].strip()
                             duration = parse_duration(duration_str)
                             total_duration += duration
-                            # Print out the duration for this prompt
-                            print(f"Total Inference Seconds: {duration:.3f}s")
+                            if not is_test:
+                                print(f"Total Inference Seconds: {duration:.3f}s")
                 except subprocess.SubprocessError as e:
                     print(f"Error during subprocess execution: {e}")
-                print('-' * 10 + "\n")
+
+                if not is_test:
+                    print('-' * 10 + "\n")
 
             if total_eval_duration > 0:
                 average_eval_rate = total_tokens / total_eval_duration
-                print(f"Average evaluation rate for model {model_name}: {average_eval_rate:.3f} tokens/s")
                 ans[model_name] = {
                     'average_token_per_second': f"{average_eval_rate:.3f} tokens/s",
                     'total_tokens': total_tokens,
                     'total_decoding_seconds': f"{total_eval_duration:.3f}s",
                     'total_inference_seconds': f"{total_duration:.3f}s",
                 }
-            print(f"Results for {model_name}: {ans[model_name]}")
-            print('-' * 10 + "\n")
+                if not is_test:
+                    print(f"Average evaluation rate for model {model_name}: {average_eval_rate:.3f} tokens/s")
+                    print(f"Results for {model_name}: {ans[model_name]}")
+                    print('-' * 10 + "\n")
+
+    if is_test:
+        print("Test run successful.")
 
     return ans
 
 if __name__ == "__main__": 
     args = parser.parse_args()
     if args.models and args.benchmark:
-        run_benchmark(args.models, args.benchmark, 'ollama')
-        print('-' * 40)
+        run_benchmark(args.models, 10, args.benchmark, args.test, 'ollama')
+        if not args.test:
+            print('-' * 40)

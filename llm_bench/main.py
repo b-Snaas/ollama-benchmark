@@ -14,37 +14,43 @@ def get_model_path(model: str) -> str:
     return pkg_resources.resource_filename('llm_bench', f'data/{model}_models.yml')
 
 @app.command()
-def sysinfo(formal: bool = True):
-    if formal:
-        sys_info = sysmain.get_extra()
-        sys_info['uuid'] = f"{sysmain.get_uuid()}"
-        print(f"memory : {sys_info['memory']:.2f} GB") 
-        print(f"cpu_info: {sys_info['cpu']}")
-        print(f"gpu_info: {sys_info['gpu']}")
-        print(f"os_version: {sys_info['os_version']}")
-        print(f"Your machine UUID : {sys_info['uuid']}")
-
-        x = connection.send_sysinfo(sys_info)
-        print(x)
-    else:
-        print(f"No print!")
+def check_internet_speed():
+    try:
+        start_time = time.time()
+        st = speedtest.Speedtest()
+        st.get_best_server()
+        download_speed = st.download() / 1_000_000
+        upload_speed = st.upload() / 1_000_000
+        elapsed_time = time.time() - start_time
+        print(f"Download Speed: {download_speed:.2f} Mbps")
+        print(f"Upload Speed: {upload_speed:.2f} Mbps")
+        print(f"Internet speed test duration: {elapsed_time:.2f} seconds")
+    except speedtest.ConfigRetrievalError as e:
+        print(f"Failed to retrieve speed test configuration: {e}")
+    except speedtest.SpeedtestException as e:
+        print(f"Failed to complete the speed test: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        
 
 @app.command()
-def check_internet_speed():
-    start_time = time.time()
-    st = speedtest.Speedtest()
-    st.get_best_server()
-    download_speed = st.download() / 1_000_000
-    upload_speed = st.upload() / 1_000_000
-    elapsed_time = time.time() - start_time
-    print(f"Download Speed: {download_speed:.2f} Mbps")
-    print(f"Upload Speed: {upload_speed:.2f} Mbps")
-    print(f"Internet speed test duration: {elapsed_time:.2f} seconds")
+def sysinfo(ollamabin: str = typer.Option('ollama', help="Path to the Ollama binary.")):
+    sys_info = sysmain.get_extra()
+    print(f"Total memory size : {sys_info['memory']:.2f} GB") 
+    print(f"cpu_info: {sys_info['cpu']}")
+    print(f"gpu_info: {sys_info['gpu']}")
+    print(f"os_version: {sys_info['os_version']}")
+
+    print("Internet speed test: ")
+    check_internet_speed()
+    print('-' * 10)
+
+    ollama_version = check_ollama.check_ollama_version(ollamabin)
+    print(f"ollama_version: {ollama_version} \n")
 
 @app.command()
 def run(
     ollamabin: str = typer.Option('ollama', help="Path to the Ollama binary."),
-    sendinfo: bool = typer.Option(False, help="Flag to send system info."),
     model: str = typer.Option(
         "all", help="Select model: all-small, gemma-small, llama3-small, mistral-small, phi3-small, qwen-small, all-medium, gemma-medium, phi3-medium, llama3-medium, all-large, drbx-large, llama3-large",
         case_sensitive=False, show_choices=True
@@ -57,23 +63,9 @@ def run(
         min=1, max=10
     )
 ):
-   
     benchmark_file = pkg_resources.resource_filename('llm_bench', 'data/benchmark_instructions.yml')
     models_file = get_model_path(model)
 
-    if sendinfo:
-        sys_info = sysmain.get_extra()
-        print(f"Total memory size : {sys_info['memory']:.2f} GB") 
-        print(f"cpu_info: {sys_info['cpu']}")
-        print(f"gpu_info: {sys_info['gpu']}")
-        print(f"os_version: {sys_info['os_version']}")
-
-        print("Internet speed test: ")
-        check_internet_speed()
-        print('-' * 10)
-
-    ollama_version = check_ollama.check_ollama_version(ollamabin)
-    print(f"ollama_version: {ollama_version} \n")
 
     start_time = time.time()
     check_models.pull_models(models_file)
@@ -81,11 +73,15 @@ def run(
     print(f"Model pulling time: {elapsed_time:.2f} seconds")
     print('-' * 10)
 
+    if test:
+        print(f"Testing pulled model(s)")
+
     bench_results_info = {}
     result = run_benchmark.run_benchmark(models_file, steps, benchmark_file, test, ollamabin)
     bench_results_info.update(result)
 
-    print(bench_results_info)
+    if not test:
+        print(bench_results_info)
 
 if __name__ == "__main__":
     app()
