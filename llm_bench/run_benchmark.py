@@ -54,29 +54,6 @@ def parse_duration(duration_str):
     else:
         raise ValueError("Unsupported duration format")
 
-def clean_output(text):
-    # Remove ANSI escape codes
-    ansi_escape = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
-    text = ansi_escape.sub('', text)
-
-    # Remove spinner characters
-    spinner_chars = re.compile(r'[⠙⠹⠸⠼⠴⠦⠧⠇⠏⠋]')
-    text = spinner_chars.sub('', text)
-
-    # Correct misformatted prompt lines
-    text = re.sub(r"prompt\s*\n+\s*(eval [a-z]+:)", r"prompt \1", text)
-
-    # Ensure each metric starts on a new line
-    metrics = [
-        "total duration:", "load duration:", "prompt eval count:", 
-        "prompt eval duration:", "prompt eval rate:", "eval count:", 
-        "eval duration:", "eval rate:"
-    ]
-    for metric in metrics:
-        text = re.sub(f"(?<!\n)(?={metric})", "\n", text)
-
-    return text.strip()
-
 def run_benchmark(models_file_path, steps, benchmark_file_path, is_test, ollamabin):
     models_dict = parse_yaml(models_file_path)
     benchmark_dict = parse_yaml(benchmark_file_path)
@@ -97,6 +74,8 @@ def run_benchmark(models_file_path, steps, benchmark_file_path, is_test, ollamab
             total_tokens = 0
             total_eval_duration = 0.0
             total_duration = 0.0
+            eval_durations = []
+            tokens_per_second = []
 
             if not is_test:
                 print(f"Starting evaluation for model: {model_name}\n")
@@ -128,6 +107,8 @@ def run_benchmark(models_file_path, steps, benchmark_file_path, is_test, ollamab
                         if 'eval duration:' in line:
                             duration_str = line.split(':')[-1].strip()
                             eval_duration = parse_duration(duration_str)
+                            eval_durations.append(eval_duration)
+                            tokens_per_second.append(tokens / eval_duration)
                             total_eval_duration += eval_duration
                             if not is_test:
                                 print(f"Decoding Seconds: {eval_duration:.3f}s")
@@ -147,13 +128,12 @@ def run_benchmark(models_file_path, steps, benchmark_file_path, is_test, ollamab
             if total_eval_duration > 0:
                 average_eval_rate = total_tokens / total_eval_duration
                 ans[model_name] = {
-                    'average_token_per_second': f"{average_eval_rate:.3f} tokens/s",
+                    'average_token_per_second': f"{average_eval_rate:.3f}",
                     'total_tokens': total_tokens,
-                    'total_decoding_seconds': f"{total_eval_duration:.3f}s",
-                    'total_inference_seconds': f"{total_duration:.3f}s",
+                    'total_decoding_seconds': f"{total_eval_duration:.3f}",
+                    'total_inference_seconds': f"{total_duration:.3f}",
                 }
                 if not is_test:
-                    print(f"Average evaluation rate for model {model_name}: {average_eval_rate:.3f} tokens/s")
                     print(f"Results for {model_name}: {ans[model_name]}")
                     print('-' * 10 + "\n")
 

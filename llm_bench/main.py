@@ -3,18 +3,18 @@ import pkg_resources
 import speedtest
 import time
 from .systeminfo import sysmain
-from .security_connection import connection 
+from .security_connection import connection
 from llm_bench import check_models, check_ollama, run_benchmark
 
 app = typer.Typer()
 
-@app.command()
 def get_model_path(model: str) -> str:
     """ Helper function to return the correct file path based on the model size """
     return pkg_resources.resource_filename('llm_bench', f'data/{model}_models.yml')
 
 @app.command()
-def check_internet_speed():
+def check_internet():
+    """Check and print the internet speed."""
     try:
         start_time = time.time()
         st = speedtest.Speedtest()
@@ -31,7 +31,6 @@ def check_internet_speed():
         print(f"Failed to complete the speed test: {e}")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-        
 
 @app.command()
 def sysinfo(ollamabin: str = typer.Option('ollama', help="Path to the Ollama binary.")):
@@ -40,10 +39,6 @@ def sysinfo(ollamabin: str = typer.Option('ollama', help="Path to the Ollama bin
     print(f"cpu_info: {sys_info['cpu']}")
     print(f"gpu_info: {sys_info['gpu']}")
     print(f"os_version: {sys_info['os_version']}")
-
-    print("Internet speed test: ")
-    check_internet_speed()
-    print('-' * 10)
 
     ollama_version = check_ollama.check_ollama_version(ollamabin)
     print(f"ollama_version: {ollama_version} \n")
@@ -63,9 +58,9 @@ def run(
         min=1, max=10
     )
 ):
+    """Run the benchmark tests."""
     benchmark_file = pkg_resources.resource_filename('llm_bench', 'data/benchmark_instructions.yml')
     models_file = get_model_path(model)
-
 
     start_time = time.time()
     check_models.pull_models(models_file)
@@ -76,12 +71,7 @@ def run(
     if test:
         print(f"Testing pulled model(s)")
 
-    bench_results_info = {}
-    result = run_benchmark.run_benchmark(models_file, steps, benchmark_file, test, ollamabin)
-    bench_results_info.update(result)
-
-    if not test:
-        print(bench_results_info)
+    run_benchmark.run_benchmark(models_file, steps, benchmark_file, test, ollamabin)
 
 if __name__ == "__main__":
     app()
