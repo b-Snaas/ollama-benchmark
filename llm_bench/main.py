@@ -33,13 +33,12 @@ def check_internet():
         print(f"An unexpected error occurred: {e}")
 
 @app.command()
-def sysinfo(ollamabin: str = typer.Option('ollama', help="Path to the Ollama binary.")):
+def sysinfo():
     sys_info = sysmain.get_extra()
-    print(f"Total memory size : {sys_info['memory']:.2f} GB") 
-    print(f"cpu_info: {sys_info['cpu']}")
-    print(f"gpu_info: {sys_info['gpu']}")
-    print(f"os_version: {sys_info['os_version']}")
+    print(f"system specs: {sys_info['specs']}")
 
+@app.command()
+def check_version(ollamabin: str = typer.Option('ollama', help="Path to the Ollama binary.")):
     ollama_version = check_ollama.check_ollama_version(ollamabin)
     print(f"ollama_version: {ollama_version} \n")
 
