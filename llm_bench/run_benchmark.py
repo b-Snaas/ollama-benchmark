@@ -91,7 +91,7 @@ def run_benchmark(models_file_path, steps, benchmark_file_path, is_test, ollamab
                         [ollamabin, 'run', model_name, prompt_text, '--verbose'],
                         capture_output=True,
                         text=True,
-                        check=True,
+                        check=False,
                         encoding='utf-8'
                     )
                     std_err = result.stderr or ''
