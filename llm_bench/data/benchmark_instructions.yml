@@ -7,8 +7,6 @@ models:
   - model: qwen:7b
 
 prompts:
-  - prompt: What are your thoughts on the latest scientific discovery regarding black holes?
-  - prompt: In a world where time travel is possible, a scientist invents a device that allows people to visit any historical event. One day, a young woman decides to travel back in time to...
   - prompt: Write a step-by-step guide on how to bake a chocolate cake from scratch.
   - prompt: Develop a python function that solves the following problem, sudoku game
   - prompt: Create a dialogue between two characters that discusses economic crisis
@@ -17,6 +15,28 @@ prompts:
   - prompt: Explore the potential effects of artificial intelligence on urban planning and infrastructure over the next 50 years.
   - prompt: Illustrate a day in the life of an astronaut aboard the International Space Station, focusing on both the scientific tasks and the personal challenges faced.
   - prompt: Craft a tale about a mysterious, ancient library discovered beneath the sands of the Sahara, revealing secrets about lost civilizations.
+  - prompt: Outline the major technological advancements that shaped the 20th century and their impact on society.
+  - prompt: Write a comprehensive guide on starting and maintaining a sustainable, year-round vegetable garden in a temperate climate.
+  - prompt: Analyze the potential long-term consequences of climate change on global food production and distribution.
+  - prompt: Design a detailed lesson plan for teaching high school students about the causes and effects of the Industrial Revolution.
+  - prompt: Compose a short story about a time traveler who accidentally alters a pivotal moment in history and must deal with the consequences.
+  - prompt: Explain the process of how a bill becomes a law in the United States, including potential obstacles and political considerations.
+  - prompt: Describe the evolution of music from the Classical period to the present day, highlighting key composers and technological innovations.
+  - prompt: Create a fictional world with its own unique ecosystem, climate, and intelligent species. Describe its geography, culture, and societal structure.
+  - prompt: Develop a comprehensive marketing strategy for launching a new eco-friendly product line in a competitive market.
+  - prompt: Write a research proposal investigating the effects of social media on adolescent mental health and academic performance.
+  - prompt: Analyze the major philosophical arguments for and against the existence of free will, and their implications for ethics and law.
+  - prompt: Design an innovative public transportation system for a major metropolitan area, addressing current issues and future needs.
+  - prompt: Explain the process of photosynthesis in detail, including its importance for life on Earth and potential applications in renewable energy.
+  - prompt: Write a series of journal entries from the perspective of a pioneer traveling the Oregon Trail in the mid-19th century.
+  - prompt: Discuss the potential societal and ethical implications of widespread human genetic engineering and enhancement.
+  - prompt: Create a detailed business plan for a startup company aiming to revolutionize waste management and recycling in urban areas.
+  - prompt: Analyze the causes, key events, and long-term impacts of the French Revolution on European politics and society.
+  - prompt: Write a comprehensive guide on how to plan, fund, and execute a year-long around-the-world trip.
+  - prompt: Explore the potential applications and ethical considerations of artificial intelligence in healthcare diagnostics and treatment.
+  - prompt: Develop a detailed proposal for a sustainable, self-sufficient colony on Mars, addressing key challenges and technological requirements.
+  - prompt: Write an in-depth analysis of a classic novel, focusing on its themes, character development, and historical context.
+  - prompt: Create a step-by-step tutorial on how to develop a mobile application, from initial concept to launch on app stores.
 
 testPrompts:
   - prompt: "Say hello."
