@@ -3,8 +3,8 @@ import pkg_resources
 import speedtest
 import time
 from .systeminfo import sysmain
-from .security_connection import connection
-from llm_bench import check_models, check_ollama, run_benchmark
+from llm_bench import check_ollama, run_benchmark
+import asyncio
 
 app = typer.Typer()
 
@@ -55,22 +55,20 @@ def run(
     steps: int = typer.Option(
         10, help="Set the amount of inferences",
         min=1, max=10
+    ),
+    concurrent: int = typer.Option(
+        1, '--concurrent', '-c', help="Number of concurrent users to simulate",
+        min=1
     )
 ):
     """Run the benchmark tests."""
     benchmark_file = pkg_resources.resource_filename('llm_bench', 'data/benchmark_instructions.yml')
     models_file = get_model_path(model)
 
-    start_time = time.time()
-    check_models.pull_models(models_file)
-    elapsed_time = time.time() - start_time
-    print(f"Model pulling time: {elapsed_time:.2f} seconds")
-    print('-' * 10)
-
     if test:
         print(f"Testing pulled model(s)")
 
-    run_benchmark.run_benchmark(models_file, steps, benchmark_file, test, ollamabin)
+    asyncio.run(run_benchmark.run_benchmark(models_file, steps, benchmark_file, test, ollamabin, concurrent))
 
 if __name__ == "__main__":
     app()

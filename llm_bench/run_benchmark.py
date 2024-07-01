@@ -32,7 +32,7 @@ parser.add_argument("-t",
 parser.add_argument("-c",
                     "--concurrent",
                     type=int,
-                    default=4,
+                    default=1,
                     help="number of concurrent prompts to process")
 
 def parse_yaml(yaml_file_path):
@@ -53,8 +53,7 @@ async def run_query_async(model, query, instance_id):
         response = await client.chat(
             model=model,
             messages=[{'role': 'user', 'content': query}],
-            stream=False,
-            options={'num_predict': 10}
+            stream=False
         )
 
         # Extracting required metrics from response
@@ -79,7 +78,7 @@ async def add_query(model, query, instance_id):
     task = asyncio.create_task(run_query_async(model, query, instance_id))
     return task
 
-async def run_benchmark(models_file_path, steps, benchmark_file_path, is_test, concurrent):
+async def run_benchmark(models_file_path, steps, benchmark_file_path, is_test, ollamabin, concurrent):
     models_dict = parse_yaml(models_file_path)
     benchmark_dict = parse_yaml(benchmark_file_path)
     allowed_models = {e['model'] for e in models_dict['models']}
@@ -94,6 +93,8 @@ async def run_benchmark(models_file_path, steps, benchmark_file_path, is_test, c
 
     for model in models_dict['models']:
         model_name = model['model']
+        print(f"Starting evaluation of {model_name}\n")
+
         if model_name in allowed_models:
             total_tokens = 0
             total_eval_duration = 0.0
@@ -125,6 +126,19 @@ async def run_benchmark(models_file_path, steps, benchmark_file_path, is_test, c
 
                 batch_eval_duration = last_end_time - first_start_time
 
+                batch_tokens = sum(result['eval_count'] for result in task_results if result)
+                batch_avg_time_to_first_token = sum(result['load_duration'] + result['prompt_eval_duration'] for result in task_results if result) / len(task_results)
+
+                # New logging for each batch/step
+                print(f"\nEvaluating batch {step + 1}/{num_steps}\n")
+                print("-----------------------------")
+                print(f"Tokens per second: {batch_tokens / batch_eval_duration:.3f}")
+                print(f"Produced tokens: {batch_tokens}")
+                print(f"Total inference time: {batch_eval_duration:.3f}")
+                print(f"Total seconds: {last_end_time:.3f}")
+                print(f"Average time to first token: {batch_avg_time_to_first_token:.3f}")
+                print("-----------------------------")
+
                 for result in task_results:
                     if result:
                         total_tokens += result['eval_count']
@@ -145,13 +159,14 @@ async def run_benchmark(models_file_path, steps, benchmark_file_path, is_test, c
             average_time_to_first_token = average_load_duration + average_prompt_eval_duration
 
             results[model_name] = {
-                'average_token_per_second': f"{average_eval_rate:.3f}",
+                'average_tokens_per_second': f"{average_eval_rate:.3f}",
                 'total_tokens': total_tokens,
                 'total_inference_seconds': f"{total_eval_duration:.3f}",
                 'average_model_loading_seconds': f"{average_load_duration:.3f}",
                 'average_prompt_processing_seconds': f"{average_prompt_eval_duration:.3f}",
                 'average_time_to_first_token': f"{average_time_to_first_token:.3f}",
                 'total_seconds': f"{total_duration:.3f}",
+                'concurrent_users': concurrent
             }
             if not is_test:
                 print(f"Results for {model_name}: {results[model_name]}")

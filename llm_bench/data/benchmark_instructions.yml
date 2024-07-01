@@ -29,13 +29,11 @@ prompts:
   - prompt: Design an innovative public transportation system for a major metropolitan area, addressing current issues and future needs.
   - prompt: Explain the process of photosynthesis in detail, including its importance for life on Earth and potential applications in renewable energy.
   - prompt: Write a series of journal entries from the perspective of a pioneer traveling the Oregon Trail in the mid-19th century.
-  - prompt: Discuss the potential societal and ethical implications of widespread human genetic engineering and enhancement.
   - prompt: Create a detailed business plan for a startup company aiming to revolutionize waste management and recycling in urban areas.
   - prompt: Analyze the causes, key events, and long-term impacts of the French Revolution on European politics and society.
   - prompt: Write a comprehensive guide on how to plan, fund, and execute a year-long around-the-world trip.
   - prompt: Explore the potential applications and ethical considerations of artificial intelligence in healthcare diagnostics and treatment.
   - prompt: Develop a detailed proposal for a sustainable, self-sufficient colony on Mars, addressing key challenges and technological requirements.
-  - prompt: Write an in-depth analysis of a classic novel, focusing on its themes, character development, and historical context.
   - prompt: Create a step-by-step tutorial on how to develop a mobile application, from initial concept to launch on app stores.
 
 testPrompts:

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "llm_bench"
-version = "0.4.24"
-description = "Forked off of LLM Benchmark for Throughputs via Ollama"
+version = "0.4.27"
+description = "LLM Benchmarking tool for OLLAMA"
 authors = ["Snaas"]
 license = "MIT"
 homepage = "https://github.com/b-Snaas/ollama-benchmark.git"
