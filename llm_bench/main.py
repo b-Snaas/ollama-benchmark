@@ -2,6 +2,7 @@ import typer
 import pkg_resources
 import speedtest
 import time
+import subprocess
 from .systeminfo import sysmain
 from llm_bench import check_ollama, run_benchmark
 import asyncio
@@ -11,6 +12,18 @@ app = typer.Typer()
 def get_model_path(model: str) -> str:
     """ Helper function to return the correct file path based on the model size """
     return pkg_resources.resource_filename('llm_bench', f'data/{model}_models.yml')
+
+def get_gpu_info():
+    """Retrieve GPU clock speed and power usage."""
+    try:
+        clock_speed_output = subprocess.check_output(['nvidia-smi', '--query-gpu=clocks.gr', '--format=csv,nounits'], text=True)
+        power_usage_output = subprocess.check_output(['nvidia-smi', '--query-gpu=power.draw', '--format=csv,nounits'], text=True)
+        clock_speed = clock_speed_output.split('\n')[1].strip()
+        power_usage = power_usage_output.split('\n')[1].strip()
+        return clock_speed, power_usage
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to retrieve GPU info: {e}")
+        return None, None
 
 @app.command()
 def check_internet():
@@ -59,9 +72,25 @@ def run(
     concurrent: int = typer.Option(
         1, '--concurrent', '-c', help="Number of concurrent users to simulate",
         min=1
+    ),
+    check_gpu: bool = typer.Option(
+        False, '--check-gpu', help="Check GPU clock speed and power usage before running the benchmark."
     )
 ):
     """Run the benchmark tests."""
+    if check_gpu:
+        clock_speed, power_usage = get_gpu_info()
+        if clock_speed and power_usage:
+            print("\n")
+            print("GPU Information before benchmark:")
+            print(f"GPU Clock Speed Before: {clock_speed} MHz")
+            print(f"GPU Power Usage Before: {power_usage} W")
+            print("\n")
+        else:
+            print("\n")
+            print("Unable to retrieve GPU information.")
+            print("\n")
+
     benchmark_file = pkg_resources.resource_filename('llm_bench', 'data/benchmark_instructions.yml')
     models_file = get_model_path(model)
 
@@ -69,6 +98,17 @@ def run(
         print(f"Testing pulled model(s)")
 
     asyncio.run(run_benchmark.run_benchmark(models_file, steps, benchmark_file, test, ollamabin, concurrent))
+
+    if check_gpu:
+        clock_speed, power_usage = get_gpu_info()
+        if clock_speed and power_usage:
+            print("GPU Information after benchmark:")
+            print(f"GPU Clock Speed After: {clock_speed} MHz")
+            print(f"GPU Power Usage After: {power_usage} W")
+            print('-' * 10 + "\n")
+        else:
+            print("Unable to retrieve GPU information.")
+            print('-' * 10 + "\n")
 
 if __name__ == "__main__":
     app()
