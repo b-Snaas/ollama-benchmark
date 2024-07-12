@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import subprocess
 import threading
 import time
+import os
 
 def parse_yaml(yaml_file_path):
     with open(yaml_file_path, 'r') as stream:
@@ -50,12 +51,43 @@ async def add_query(model, query, instance_id):
     task = asyncio.create_task(run_query_async(model, query, instance_id))
     return task
 
-# GPU monitoring functions
-def get_gpu_info():
-    """Retrieve GPU clock speed and power usage."""
+def get_cuda_visible_device_index():
+    """Get the nvidia-smi index corresponding to CUDA_VISIBLE_DEVICES=0"""
     try:
-        clock_speed_output = subprocess.check_output(['nvidia-smi', '--query-gpu=clocks.gr', '--format=csv,nounits'], text=True)
-        power_usage_output = subprocess.check_output(['nvidia-smi', '--query-gpu=power.draw', '--format=csv,nounits'], text=True)
+        # Get the PCI bus ID of the first CUDA visible device
+        cuda_visible_devices = os.environ.get('CUDA_VISIBLE_DEVICES', '0').split(',')[0]
+        cuda_device_pci_bus_id = subprocess.check_output(
+            f"nvidia-smi --id={cuda_visible_devices} --query-gpu=pci.bus_id --format=csv,noheader",
+            shell=True
+        ).decode().strip()
+
+        # Find the nvidia-smi index of this PCI bus ID
+        nvidia_smi_output = subprocess.check_output(
+            "nvidia-smi --query-gpu=index,pci.bus_id --format=csv,noheader",
+            shell=True
+        ).decode().strip().split('\n')
+
+        for line in nvidia_smi_output:
+            index, pci_bus_id = line.split(', ')
+            if pci_bus_id == cuda_device_pci_bus_id:
+                return int(index)
+
+        raise ValueError(f"No matching nvidia-smi index found for CUDA device {cuda_visible_devices}")
+    except Exception as e:
+        print(f"Error getting CUDA to nvidia-smi mapping: {e}")
+        return None
+
+def get_gpu_info(gpu_index):
+    """Retrieve GPU clock speed and power usage for a specific GPU."""
+    try:
+        clock_speed_output = subprocess.check_output(
+            ['nvidia-smi', f'--id={gpu_index}', '--query-gpu=clocks.gr', '--format=csv,nounits'],
+            text=True
+        )
+        power_usage_output = subprocess.check_output(
+            ['nvidia-smi', f'--id={gpu_index}', '--query-gpu=power.draw', '--format=csv,nounits'],
+            text=True
+        )
         clock_speed = clock_speed_output.split('\n')[1].strip()
         power_usage = power_usage_output.split('\n')[1].strip()
         return float(clock_speed), float(power_usage)
@@ -69,11 +101,11 @@ def get_gpu_info():
 gpu_data = []
 stop_monitoring = threading.Event()
 
-def monitor_gpu():
+def monitor_gpu(gpu_index):
     global gpu_data
     while not stop_monitoring.is_set():
         try:
-            clock_speed, power_usage = get_gpu_info()
+            clock_speed, power_usage = get_gpu_info(gpu_index)
             if clock_speed is not None and power_usage is not None:
                 timestamp = datetime.now().isoformat()
                 gpu_data.append({
@@ -81,7 +113,7 @@ def monitor_gpu():
                     'clock_speed': clock_speed,
                     'power_usage': power_usage
                 })
-            time.sleep(1)  # Collect data every minute
+            time.sleep(1)  # Collect data every second
         except Exception as e:
             print(f"Error in GPU monitoring thread: {e}")
             time.sleep(1)  # Wait a bit before trying again
@@ -101,15 +133,19 @@ async def run_benchmark(models_file_path, steps, benchmark_file_path, is_test, o
 
     if should_monitor_gpu:
         try:
-            # Test GPU info retrieval before starting the monitoring thread
-            clock_speed, power_usage = get_gpu_info()
-            if clock_speed is None or power_usage is None:
-                print("Warning: Unable to retrieve GPU information. GPU monitoring will be disabled.")
+            cuda_gpu_index = get_cuda_visible_device_index()
+            if cuda_gpu_index is None:
+                print("Warning: Unable to determine the correct GPU index. GPU monitoring will be disabled.")
                 should_monitor_gpu = False
             else:
-                monitoring_thread = threading.Thread(target=monitor_gpu)
-                monitoring_thread.start()
-                print("GPU monitoring started.")
+                clock_speed, power_usage = get_gpu_info(cuda_gpu_index)
+                if clock_speed is None or power_usage is None:
+                    print("Warning: Unable to retrieve GPU information. GPU monitoring will be disabled.")
+                    should_monitor_gpu = False
+                else:
+                    monitoring_thread = threading.Thread(target=monitor_gpu, args=(cuda_gpu_index,))
+                    monitoring_thread.start()
+                    print("GPU monitoring started.")
         except Exception as e:
             print(f"Error setting up GPU monitoring: {e}")
             print("GPU monitoring will be disabled.")
