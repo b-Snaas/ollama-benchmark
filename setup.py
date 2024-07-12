@@ -5,7 +5,7 @@ with open('README.md', 'r') as fh:
 
 setup(
     name='llm_bench',
-    version='0.4.29',
+    version='0.4.32',
     description='LLM Benchmark',
     long_description=long_description,
     long_description_content_type='text/markdown',
